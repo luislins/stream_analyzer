@@ -1,0 +1,2 @@
+class TwitchStreamer < ApplicationRecord
+end

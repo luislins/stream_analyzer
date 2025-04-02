@@ -1,0 +1,86 @@
+<%= turbo_frame_tag "streamer_#{streamer.id}" do %>
+  <div id="streamer_<%= streamer.id %>" class="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-100 group transform hover:-translate-y-1 h-full flex flex-col">
+    <div class="relative">
+      <% if streamer.live? %>
+        <div class="absolute top-4 left-4 bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center shadow-md">
+          <span class="w-2 h-2 bg-white rounded-full mr-2 animate-pulse"></span>
+          Ao Vivo
+        </div>
+      <% end %>
+      <div class="relative h-48 overflow-hidden">
+        <img src="<%= streamer.profile_image_url %>" alt="<%= streamer.username %>" class="w-full h-48 object-cover transform group-hover:scale-105 transition-transform duration-500" />
+        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+        <div class="absolute bottom-4 left-4 right-4">
+          <div class="flex items-center space-x-3">
+            <img src="<%= streamer.profile_image_url %>" alt="<%= streamer.username %>" class="w-10 h-10 rounded-full border-2 border-white shadow-md" />
+            <div>
+              <h2 class="text-lg font-bold text-white"><%= streamer.username %></h2>
+              <p class="text-gray-200 text-xs"><%= streamer.followers %> seguidores</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-6 flex-grow flex flex-col">
+      <div class="space-y-4 flex-grow">
+        <!-- Status section with fixed height -->
+        <div class="h-10">
+          <% if streamer.live? %>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center text-gray-700">
+                <svg class="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                <span class="font-medium"><%= streamer.viewers %> viewers</span>
+              </div>
+              <span class="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-md font-medium"><%= streamer.current_game %></span>
+            </div>
+          <% else %>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center text-gray-500">
+                <svg class="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Offline</span>
+              </div>
+              <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-md font-medium">Indisponível</span>
+            </div>
+          <% end %>
+        </div>
+
+        <!-- Last stream section with fixed height -->
+        <div class="h-6">
+          <% if streamer.last_stream_at %>
+            <div class="flex items-center text-gray-600 text-sm">
+              <svg class="w-4 h-4 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Último stream: <%= streamer.last_stream_at.strftime("%d/%m/%Y %H:%M") %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="mt-6 grid grid-cols-2 gap-3">
+        <a href="https://www.twitch.tv/<%= streamer.username %>" target="_blank" 
+           class="inline-flex justify-center items-center px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-colors duration-200 shadow-sm">
+          <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/>
+          </svg>
+          Ver na Twitch
+        </a>
+
+        <%= button_to twitch_streamer_path(streamer), 
+            method: :delete, 
+            class: "inline-flex justify-center items-center px-4 py-2 bg-white border border-red-500 text-red-600 rounded-lg hover:bg-red-50 transition-colors duration-200",
+            data: { confirm: "Tem certeza que deseja remover este streamer?" } do %>
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          Remover
+        <% end %>
+      </div>
+    </div>
+  </div>
+<% end %>
