@@ -15,7 +15,11 @@
             <img src="<%= streamer.profile_image_url %>" alt="<%= streamer.username %>" class="w-10 h-10 rounded-full border-2 border-white shadow-md" />
             <div>
               <h2 class="text-lg font-bold text-white"><%= streamer.username %></h2>
-              <p class="text-gray-200 text-xs"><%= streamer.followers %> seguidores</p>
+              <div class="flex items-center space-x-2 text-gray-200 text-xs">
+                <span><%= streamer.followers %> seguidores</span>
+                <span>•</span>
+                <span><%= streamer.viewers %> viewers</span>
+              </div>
             </div>
           </div>
         </div>
@@ -24,17 +28,25 @@
 
     <div class="p-6 flex-grow flex flex-col">
       <div class="space-y-4 flex-grow">
-        <!-- Status section with fixed height -->
-        <div class="h-10">
+        <!-- Status section -->
+        <div class="space-y-2">
           <% if streamer.live? %>
             <div class="flex items-center justify-between">
               <div class="flex items-center text-gray-700">
                 <svg class="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
-                <span class="font-medium"><%= streamer.viewers %> viewers</span>
+                <span class="font-medium">Streamingsadasdad</span>
               </div>
               <span class="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-md font-medium"><%= streamer.current_game %></span>
+            </div>
+            <div class="text-sm text-gray-600">
+              <div class="flex items-center">
+                <svg class="w-4 h-4 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <%= streamer.formatted_stream_duration %>
+              </div>
             </div>
           <% else %>
             <div class="flex items-center justify-between">
@@ -49,14 +61,18 @@
           <% end %>
         </div>
 
-        <!-- Last stream section with fixed height -->
-        <div class="h-6">
+        <!-- Last stream section -->
+        <div class="space-y-2">
           <% if streamer.last_stream_at %>
-            <div class="flex items-center text-gray-600 text-sm">
-              <svg class="w-4 h-4 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Último stream: <%= streamer.last_stream_at.strftime("%d/%m/%Y %H:%M") %>
+          
+            <div class="text-sm text-gray-500">
+              <div class="flex items-center">
+                <svg class="w-4 h-4 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                <%= streamer.viewers %> viewers
+              </div>
             </div>
           <% end %>
         </div>
@@ -74,7 +90,7 @@
         <%= button_to twitch_streamer_path(streamer), 
             method: :delete, 
             class: "inline-flex justify-center items-center px-4 py-2 bg-white border border-red-500 text-red-600 rounded-lg hover:bg-red-50 transition-colors duration-200",
-            data: { confirm: "Tem certeza que deseja remover este streamer?" } do %>
+            data: { confirm: "Tem certeza que deseja remover este streamer do monitoramento?" } do %>
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
           </svg>
