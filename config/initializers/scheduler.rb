@@ -5,7 +5,7 @@ Rails.logger.info "Starting Rufus Scheduler..."
 scheduler = Rufus::Scheduler.singleton
 
 # Atualiza os dados dos streamers a cada 5 minutos
-scheduler.every '5m' do
+scheduler.every '1m' do
   Rails.logger.info "Scheduler triggered UpdateStreamersJob at #{Time.current}"
   UpdateStreamersJob.perform_later
 end
