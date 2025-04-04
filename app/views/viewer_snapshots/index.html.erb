@@ -1,0 +1,883 @@
+<!-- app/views/viewer_snapshots/index.html.erb -->
+<div class="container mx-auto py-8">
+  <h1 class="text-3xl font-bold mb-8 text-gray-800">🎥 Streamer Monitor</h1>
+  
+  <!-- Filter Card -->
+  <div class="bg-white shadow rounded-lg mb-8">
+    <div class="border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+      <h2 class="text-xl font-semibold text-gray-800">Filter Options</h2>
+      <button type="button" id="toggle-filters" class="text-gray-500 hover:text-gray-700 text-sm flex items-center">
+        <span id="toggle-text">Hide Filters</span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" viewBox="0 0 20 20" fill="currentColor" id="toggle-icon">
+          <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+        </svg>
+      </button>
+    </div>
+    <div class="p-6" id="filter-content">
+      <%= form_with url: viewer_snapshots_path, method: :get, local: true do |f| %>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Start Date -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700">Start Date</label>
+            <div class="flex flex-col">
+              <%= date_field_tag :start_date, params[:start_date], class: "w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" %>
+              <div class="grid grid-cols-2 gap-2 mt-2">
+                <%= select_tag :start_hour, 
+                  options_for_select((0..23).map { |h| [format("%02d", h), format("%02d", h)] }, params[:start_hour]), 
+                  class: "border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" %>
+                <%= select_tag :start_minute, 
+                  options_for_select((0..59).map { |m| [format("%02d", m), format("%02d", m)] }, params[:start_minute]), 
+                  class: "border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" %>
+              </div>
+            </div>
+          </div>
+          
+          <!-- End Date -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700">End Date</label>
+            <div class="flex flex-col">
+              <%= date_field_tag :end_date, params[:end_date], class: "w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" %>
+              <div class="grid grid-cols-2 gap-2 mt-2">
+                <%= select_tag :end_hour, 
+                  options_for_select((0..23).map { |h| [format("%02d", h), format("%02d", h)] }, params[:end_hour]), 
+                  class: "border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" %>
+                <%= select_tag :end_minute, 
+                  options_for_select((0..59).map { |m| [format("%02d", m), format("%02d", m)] }, params[:end_minute]), 
+                  class: "border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" %>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Streamers -->
+          <div class="mb-4">
+            <div class="flex justify-between items-center">
+              <label class="block text-sm font-medium text-gray-700">Streamers</label>
+              <div class="flex">
+                <button type="button" id="select-all" class="text-xs text-blue-600 hover:text-blue-800 mr-2">Select All</button>
+                <button type="button" id="deselect-all" class="text-xs text-blue-600 hover:text-blue-800">Deselect All</button>
+              </div>
+            </div>
+            <div class="relative mt-2">
+              <input type="text" id="streamer-search" placeholder="Search streamers..." class="w-full border border-gray-300 rounded-md px-3 py-2 mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+            <div class="flex flex-col max-h-40 overflow-y-auto border border-gray-200 rounded-md p-2 bg-gray-50">
+              <% TwitchStreamer.all.each do |streamer| %>
+                <div class="flex items-center py-1 px-2 hover:bg-gray-100 rounded streamer-item">
+                  <%= check_box_tag "streamer_ids[]", streamer.id, params[:streamer_ids]&.include?(streamer.id.to_s), 
+                    id: "streamer-#{streamer.id}", class: "mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" %>
+                  <label for="streamer-<%= streamer.id %>" class="text-gray-700 text-sm cursor-pointer streamer-name">
+                    <%= streamer.username || streamer.channel_name %>
+                  </label>
+                </div>
+              <% end %>
+            </div>
+          </div>
+          
+          <!-- Actions -->
+          <div class="flex flex-col justify-center">
+            <%= submit_tag "Apply Filters", class: "bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow transition duration-150 ease-in-out mb-2" %>
+            <%= link_to "Reset Filters", viewer_snapshots_path, class: "bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded shadow text-center transition duration-150 ease-in-out" %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+  
+  <!-- Tabs -->
+  <div class="mb-8">
+    <div class="border-b border-gray-200">
+      <nav class="flex -mb-px">
+        <button type="button" class="py-4 px-6 border-b-2 border-blue-500 text-blue-600 font-medium text-sm" data-tab="table">
+          Table View
+        </button>
+        <button type="button" class="py-4 px-6 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm" data-tab="chart">
+          Line Chart
+        </button>
+        <button type="button" class="py-4 px-6 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm" data-tab="comparison">
+          Comparison
+        </button>
+      </nav>
+    </div>
+    
+    <!-- Table View -->
+    <div id="table-content" class="tab-content block">
+      <div class="bg-white shadow rounded-lg mt-4">
+        <div class="border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+          <h2 class="text-xl font-semibold text-gray-800">Viewer Snapshots</h2>
+          <div class="flex items-center space-x-4">
+            <div class="relative">
+              <input type="text" id="table-search" placeholder="Search table..." class="text-sm border border-gray-300 rounded-md pl-8 pr-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 absolute left-2 top-1/2 transform -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="p-6">
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200" id="data-table">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" data-sort="streamer">
+                    <div class="flex items-center">
+                      Streamer
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                      </svg>
+                    </div>
+                  </th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" data-sort="datetime">
+                    <div class="flex items-center">
+                      Date & Time
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                      </svg>
+                    </div>
+                  </th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" data-sort="viewers">
+                    <div class="flex items-center">
+                      Viewers
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                      </svg>
+                    </div>
+                  </th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/3">Visual</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200" id="table-body">
+                <% @snapshots.each do |snapshot| %>
+                  <tr class="hover:bg-gray-50 table-row" data-streamer="<%= snapshot.streamable.username || snapshot.streamable.channel_name %>" data-viewers="<%= snapshot.viewer_count %>">
+                    <td class="px-6 py-2 whitespace-nowrap">
+                      <div class="flex items-center">
+                        <div class="h-3 w-3 rounded-full bg-blue-500 mr-2 streamer-color" data-streamer-id="<%= snapshot.streamable_id %>"></div>
+                        <span class="font-medium text-gray-900"><%= snapshot.streamable.username || snapshot.streamable.channel_name %></span>
+                      </div>
+                    </td>
+                    <td class="px-6 py-2 whitespace-nowrap text-gray-700">
+                      <%= l(snapshot.captured_at, format: :short) %>
+                    </td>
+                    <td class="px-6 py-2 whitespace-nowrap">
+                      <div class="flex items-center">
+                        <span class="font-semibold text-gray-900"><%= number_with_delimiter(snapshot.viewer_count) %></span>
+                        <% 
+                          # Calculate percentage change from previous snapshot if available
+                          previous_snapshot = @snapshots.select { |s| s.streamable_id == snapshot.streamable_id && s.captured_at < snapshot.captured_at }.max_by(&:captured_at)
+                          if previous_snapshot
+                            change_pct = ((snapshot.viewer_count - previous_snapshot.viewer_count) / previous_snapshot.viewer_count.to_f) * 100
+                            if change_pct.abs >= 5 # Only show significant changes
+                        %>
+                          <span class="ml-2 text-xs <%= change_pct > 0 ? 'text-green-600' : 'text-red-600' %>">
+                            <%= change_pct > 0 ? '↑' : '↓' %> <%= change_pct.abs.round(1) %>%
+                          </span>
+                        <% 
+                            end
+                          end
+                        %>
+                      </div>
+                    </td>
+                    <td class="px-6 py-2 whitespace-nowrap">
+                      <div class="bg-gray-200 rounded h-4 overflow-hidden">
+                        <div
+                          class="h-4 transition-all duration-300 ease-in-out streamer-bar"
+                          data-streamer-id="<%= snapshot.streamable_id %>"
+                          style="width: <%= [[(snapshot.viewer_count.to_f / @max_viewers) * 100, 100].min.round(2), 5].max %>%; background-color: rgba(59, 130, 246, 0.8);"
+                        ></div>
+                      </div>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Line Chart -->
+    <div id="chart-content" class="tab-content hidden">
+      <div class="bg-white shadow rounded-lg mt-4">
+        <div class="border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+          <h2 class="text-xl font-semibold text-gray-800">Viewer Trends</h2>
+          <div class="flex items-center space-x-4">
+            <div class="flex items-center">
+              <label for="chart-type" class="text-sm text-gray-600 mr-2">Chart Type:</label>
+              <select id="chart-type" class="text-sm border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <option value="line">Line</option>
+                <option value="area">Area</option>
+                <option value="spline">Smooth Line</option>
+              </select>
+            </div>
+            <div class="flex items-center">
+              <label for="chart-scale" class="text-sm text-gray-600 mr-2">Scale:</label>
+              <select id="chart-scale" class="text-sm border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <option value="linear">Linear</option>
+                <option value="logarithmic">Logarithmic</option>
+              </select>
+            </div>
+            <button type="button" id="toggle-legend" class="text-sm text-blue-600 hover:text-blue-800">Toggle Legend</button>
+          </div>
+        </div>
+        <div class="p-6">
+          <div class="mb-4 flex flex-wrap gap-2">
+            <% @snapshots.group_by(&:streamable).each_with_index do |(streamer, _), index| %>
+              <div class="flex items-center">
+                <div class="h-3 w-3 rounded-full mr-1 streamer-color" data-streamer-id="<%= streamer.id %>" style="background-color: <%= ['#3b82f6', '#10b981', '#f97316', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#eab308'][index % 8] %>;"></div>
+                <span class="text-sm text-gray-700"><%= streamer.username || streamer.channel_name %></span>
+              </div>
+            <% end %>
+          </div>
+          
+          <div class="grid grid-cols-1 gap-6">
+            <div class="bg-white rounded-lg shadow p-4 border border-gray-200">
+              <h3 class="text-lg font-bold mb-4 text-gray-800">Combined Viewer Trends</h3>
+              <% 
+                # Create combined chart with all streamers
+                combined_chart_data = {
+                  type: "line",
+                  data: {
+                    labels: @snapshots.map { |s| s.captured_at.strftime("%d/%m %H:%M") }.uniq.sort,
+                    datasets: @snapshots.group_by(&:streamable).map.with_index do |(streamer, snapshots), index|
+                      {
+                        label: streamer.username || streamer.channel_name,
+                        data: snapshots.sort_by(&:captured_at).map(&:viewer_count),
+                        fill: false,
+                        borderColor: ["rgb(59, 130, 246)", "rgb(16, 185, 129)", "rgb(249, 115, 22)", "rgb(139, 92, 246)", "rgb(236, 72, 153)", "rgb(6, 182, 212)", "rgb(132, 204, 22)", "rgb(234, 179, 8)"][index % 8],
+                        tension: 0.1,
+                        pointRadius: 2,
+                        borderWidth: 2
+                      }
+                    end
+                  },
+                  options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        position: 'top',
+                        labels: {
+                          boxWidth: 12,
+                          padding: 10,
+                          font: {
+                            size: 11
+                          }
+                        }
+                      },
+                      title: {
+                        display: false
+                      },
+                      tooltip: {
+                        mode: 'index',
+                        intersect: false
+                      }
+                    },
+                    scales: {
+                      x: {
+                        ticks: {
+                          maxRotation: 45,
+                          minRotation: 45
+                        }
+                      },
+                      y: {
+                        beginAtZero: true,
+                        grid: {
+                          color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                      }
+                    },
+                    interaction: {
+                      mode: 'nearest',
+                      axis: 'x',
+                      intersect: false
+                    }
+                  }
+                }
+              %>
+              <div class="h-96">
+                <%= image_tag "https://quickchart.io/chart?c=#{URI.encode_www_form_component(combined_chart_data.to_json)}&backgroundColor=white&width=1000&height=500", class: "rounded shadow-md w-full h-full object-contain" %>
+              </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+              <% @snapshots.group_by(&:streamable).each_with_index do |(streamer, snapshots), index| %>
+                <div class="bg-white rounded-lg shadow p-4 border border-gray-200">
+                  <h3 class="text-lg font-bold mb-2 text-gray-800 flex items-center">
+                    <div class="h-3 w-3 rounded-full mr-2 streamer-color" data-streamer-id="<%= streamer.id %>" style="background-color: <%= ['#3b82f6', '#10b981', '#f97316', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#eab308'][index % 8] %>;"></div>
+                    <%= streamer.username || streamer.channel_name %>
+                  </h3>
+                  <% 
+                    chart_data = {
+                      type: "line",
+                      data: {
+                        labels: snapshots.map { |s| s.captured_at.strftime("%d/%m %H:%M") },
+                        datasets: [
+                          {
+                            label: "Viewers",
+                            data: snapshots.map(&:viewer_count),
+                            fill: false,
+                            borderColor: ["rgb(59, 130, 246)", "rgb(16, 185, 129)", "rgb(249, 115, 22)", "rgb(139, 92, 246)", "rgb(236, 72, 153)", "rgb(6, 182, 212)", "rgb(132, 204, 22)", "rgb(234, 179, 8)"][index % 8],
+                            backgroundColor: ["rgba(59, 130, 246, 0.1)", "rgba(16, 185, 129, 0.1)", "rgba(249, 115, 22, 0.1)", "rgba(139, 92, 246, 0.1)", "rgba(236, 72, 153, 0.1)", "rgba(6, 182, 212, 0.1)", "rgba(132, 204, 22, 0.1)", "rgba(234, 179, 8, 0.1)"][index % 8],
+                            tension: 0.1,
+                            pointRadius: 2,
+                            borderWidth: 2
+                          }
+                        ]
+                      },
+                      options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                          legend: {
+                            display: false
+                          },
+                          title: {
+                            display: false
+                          }
+                        },
+                        scales: {
+                          x: {
+                            ticks: {
+                              maxRotation: 45,
+                              minRotation: 45
+                            }
+                          },
+                          y: {
+                            beginAtZero: true,
+                            grid: {
+                              color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                          }
+                        }
+                      }
+                    }
+                  %>
+                  <div class="h-64">
+                    <%= image_tag "https://quickchart.io/chart?c=#{URI.encode_www_form_component(chart_data.to_json)}&backgroundColor=white&width=500&height=300", class: "rounded shadow-md w-full h-full object-contain" %>
+                  </div>
+                  <div class="mt-2 text-sm text-gray-600">
+                    <div class="grid grid-cols-3 gap-2 mt-2">
+                      <div>
+                        <span class="font-medium">Peak:</span> 
+                        <%= number_with_delimiter(snapshots.map(&:viewer_count).max) %>
+                      </div>
+                      <div>
+                        <span class="font-medium">Avg:</span> 
+                        <%= number_with_delimiter((snapshots.sum(&:viewer_count) / snapshots.size).round) %>
+                      </div>
+                      <div>
+                        <span class="font-medium">Min:</span> 
+                        <%= number_with_delimiter(snapshots.map(&:viewer_count).min) %>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Comparison View -->
+    <div id="comparison-content" class="tab-content hidden">
+      <!-- Existing comparison content -->
+      <div class="bg-white shadow rounded-lg mt-4">
+        <div class="border-b border-gray-200 px-6 py-4">
+          <h2 class="text-xl font-semibold text-gray-800">Streamer Comparison</h2>
+        </div>
+        <div class="p-6">
+          <% 
+            # Prepare comparison data
+            comparison_data = @snapshots.group_by(&:streamable).map do |streamer, snapshots|
+              avg_viewers = snapshots.sum(&:viewer_count) / snapshots.size
+              peak_viewers = snapshots.map(&:viewer_count).max
+              min_viewers = snapshots.map(&:viewer_count).min
+              
+              {
+                name: streamer.username || streamer.channel_name,
+                avg_viewers: avg_viewers,
+                peak_viewers: peak_viewers,
+                min_viewers: min_viewers,
+                streamer_id: streamer.id
+              }
+            end
+            
+            # Create comparison chart
+            comparison_chart = {
+              type: 'bar',
+              data: {
+                labels: comparison_data.map { |d| d[:name] },
+                datasets: [
+                  {
+                    label: 'Average Viewers',
+                    data: comparison_data.map { |d| d[:avg_viewers] },
+                    backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                    borderColor: 'rgba(59, 130, 246, 1)',
+                    borderWidth: 1
+                  },
+                  {
+                    label: 'Peak Viewers',
+                    data: comparison_data.map { |d| d[:peak_viewers] },
+                    backgroundColor: 'rgba(249, 115, 22, 0.7)',
+                    borderColor: 'rgba(249, 115, 22, 1)',
+                    borderWidth: 1
+                  },
+                  {
+                    label: 'Minimum Viewers',
+                    data: comparison_data.map { |d| d[:min_viewers] },
+                    backgroundColor: 'rgba(107, 114, 128, 0.7)',
+                    borderColor: 'rgba(107, 114, 128, 1)',
+                    borderWidth: 1
+                  }
+                ]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    position: 'top',
+                  },
+                  title: {
+                    display: false
+                  }
+                },
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    grid: {
+                      color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                  }
+                }
+              }
+            }
+          %>
+          
+          <div class="h-96 mb-8">
+            <%= image_tag "https://quickchart.io/chart?c=#{URI.encode_www_form_component(comparison_chart.to_json)}&backgroundColor=white&width=1000&height=500", class: "rounded shadow-md w-full h-full object-contain" %>
+          </div>
+          
+          <div class="mt-8">
+            <h3 class="text-lg font-semibold mb-4 text-gray-800">Summary Statistics</h3>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Streamer</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg. Viewers</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Peak Viewers</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Min Viewers</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Growth Trend</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <% comparison_data.each_with_index do |data, index| %>
+                    <% 
+                      # Calculate growth trend
+                      streamer_snapshots = @snapshots.select { |s| (s.streamable.username || s.streamable.channel_name) == data[:name] }
+                                                    .sort_by(&:captured_at)
+                      
+                      growth_trend = "Stable"
+                      trend_color = "text-gray-500"
+                      
+                      if streamer_snapshots.length > 5
+                        first_five = streamer_snapshots.first(5)
+                        last_five = streamer_snapshots.last(5)
+                        
+                        first_avg = first_five.sum(&:viewer_count) / first_five.length
+                        last_avg = last_five.sum(&:viewer_count) / last_five.length
+                        
+                        percent_change = ((last_avg - first_avg) / first_avg.to_f) * 100
+                        
+                        if percent_change > 10
+                          growth_trend = "↑ Growing (#{percent_change.round(1)}%)"
+                          trend_color = "text-green-600"
+                        elsif percent_change < -10
+                          growth_trend = "↓ Declining (#{percent_change.round(1)}%)"
+                          trend_color = "text-red-600"
+                        end
+                      end
+                    %>
+                    <tr class="hover:bg-gray-50">
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                          <div class="h-3 w-3 rounded-full mr-2 streamer-color" data-streamer-id="<%= data[:streamer_id] %>" style="background-color: <%= ['#3b82f6', '#10b981', '#f97316', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#eab308'][index % 8] %>;"></div>
+                          <span class="font-medium text-gray-900"><%= data[:name] %></span>
+                        </div>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-gray-700"><%= number_with_delimiter(data[:avg_viewers].round) %></td>
+                      <td class="px-6 py-4 whitespace-nowrap text-gray-700"><%= number_with_delimiter(data[:peak_viewers]) %></td>
+                      <td class="px-6 py-4 whitespace-nowrap text-gray-700"><%= number_with_delimiter(data[:min_viewers]) %></td>
+                      <td class="px-6 py-4 whitespace-nowrap <%= trend_color %>"><%= growth_trend %></td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Heatmap View (New) -->
+    <div id="heatmap-content" class="tab-content hidden">
+      <div class="bg-white shadow rounded-lg mt-4">
+        <div class="border-b border-gray-200 px-6 py-4">
+          <h2 class="text-xl font-semibold text-gray-800">Viewer Activity Heatmap</h2>
+        </div>
+        <div class="p-6">
+          <p class="text-sm text-gray-600 mb-4">This heatmap shows viewer activity patterns by hour and day, helping identify peak viewing times.</p>
+          
+          <% 
+            # Create heatmap data
+            days = %w[Sunday Monday Tuesday Wednesday Thursday Friday Saturday]
+            hours = (0..23).to_a
+            
+            # Group snapshots by day and hour
+            heatmap_data = {}
+            days.each do |day|
+              heatmap_data[day] = {}
+              hours.each do |hour|
+                heatmap_data[day][hour] = 0
+              end
+            end
+            
+            @snapshots.each do |snapshot|
+              day = snapshot.captured_at.strftime('%A')
+              hour = snapshot.captured_at.hour
+              heatmap_data[day][hour] += snapshot.viewer_count
+            end
+            
+            # Convert to format for chart
+            heatmap_chart_data = {
+              type: 'heatmap',
+              data: {
+                labels: hours.map { |h| "#{h}:00" },
+                datasets: days.map do |day|
+                  {
+                    label: day,
+                    data: hours.map { |hour| heatmap_data[day][hour] },
+                    backgroundColor: 'rgba(59, 130, 246, 0.8)'
+                  }
+                end
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    position: 'right',
+                  },
+                  tooltip: {
+                    callbacks: {
+                      label: "function(context) { return context.dataset.label + ' ' + context.label + ': ' + context.raw + ' viewers'; }"
+                    }
+                  }
+                },
+                scales: {
+                  y: {
+                    title: {
+                      display: true,
+                      text: 'Day of Week'
+                    }
+                  },
+                  x: {
+                    title: {
+                      display: true,
+                      text: 'Hour of Day'
+                    }
+                  }
+                }
+              }
+            }
+          %>
+          
+          <div class="h-96 mb-8">
+            <%= image_tag "https://quickchart.io/chart?c=#{URI.encode_www_form_component(heatmap_chart_data.to_json)}&backgroundColor=white&width=1000&height=500", class: "rounded shadow-md w-full h-full object-contain" %>
+          </div>
+          
+          <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white rounded-lg shadow p-4 border border-gray-200">
+              <h3 class="text-lg font-semibold mb-4 text-gray-800">Peak Hours</h3>
+              <div class="space-y-2">
+                <% 
+                  # Find peak hours across all days
+                  hour_totals = {}
+                  hours.each do |hour|
+                    hour_totals[hour] = days.sum { |day| heatmap_data[day][hour] }
+                  end
+                  
+                  # Get top 5 peak hours
+                  top_hours = hour_totals.sort_by { |_, v| -v }.first(5)
+                %>
+                
+                <% top_hours.each do |hour, total| %>
+                  <div class="flex items-center">
+                    <div class="w-24 text-sm font-medium text-gray-700"><%= "#{hour}:00 - #{(hour + 1) % 24}:00" %></div>
+                    <div class="flex-1">
+                      <div class="bg-gray-200 rounded h-4 overflow-hidden">
+                        <div
+                          class="bg-blue-500 h-4"
+                          style="width: <%= [(total.to_f / top_hours.first[1].to_f) * 100, 5].max %>%;"
+                        ></div>
+                      </div>
+                    </div>
+                    <div class="w-24 text-right text-sm text-gray-700"><%= number_with_delimiter(total) %> viewers</div>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow p-4 border border-gray-200">
+              <h3 class="text-lg font-semibold mb-4 text-gray-800">Peak Days</h3>
+              <div class="space-y-2">
+                <% 
+                  # Find peak days
+                  day_totals = {}
+                  days.each do |day|
+                    day_totals[day] = hours.sum { |hour| heatmap_data[day][hour] }
+                  end
+                  
+                  # Sort days by total viewers
+                  sorted_days = day_totals.sort_by { |_, v| -v }
+                %>
+                
+                <% sorted_days.each do |day, total| %>
+                  <div class="flex items-center">
+                    <div class="w-24 text-sm font-medium text-gray-700"><%= day %></div>
+                    <div class="flex-1">
+                      <div class="bg-gray-200 rounded h-4 overflow-hidden">
+                        <div
+                          class="bg-blue-500 h-4"
+                          style="width: <%= [(total.to_f / sorted_days.first[1]) * 100, 5].max %>%"
+                        ></div>
+                      </div>
+                    </div>
+                    <div class="w-24 text-right text-sm text-gray-700"><%= number_with_delimiter(total) %> viewers</div>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Tab functionality
+    const tabButtons = document.querySelectorAll('[data-tab]');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const tabName = this.getAttribute('data-tab');
+        
+        // Update button styles
+        tabButtons.forEach(btn => {
+          if (btn === this) {
+            btn.classList.remove('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+            btn.classList.add('border-blue-500', 'text-blue-600');
+          } else {
+            btn.classList.remove('border-blue-500', 'text-blue-600');
+            btn.classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+          }
+        });
+        
+        // Show/hide content
+        tabContents.forEach(content => {
+          if (content.id === `${tabName}-content`) {
+            content.classList.remove('hidden');
+            content.classList.add('block');
+          } else {
+            content.classList.remove('block');
+            content.classList.add('hidden');
+          }
+        });
+      });
+    });
+    
+    // Toggle filters
+    const toggleFiltersBtn = document.getElementById('toggle-filters');
+    const filterContent = document.getElementById('filter-content');
+    const toggleIcon = document.getElementById('toggle-icon');
+    const toggleText = document.getElementById('toggle-text');
+    
+    toggleFiltersBtn.addEventListener('click', function() {
+      filterContent.classList.toggle('hidden');
+      
+      if (filterContent.classList.contains('hidden')) {
+        toggleIcon.innerHTML = '<path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />';
+        toggleText.textContent = 'Show Filters';
+      } else {
+        toggleIcon.innerHTML = '<path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />';
+        toggleText.textContent = 'Hide Filters';
+      }
+    });
+    
+    // Streamer search functionality
+    const streamerSearch = document.getElementById('streamer-search');
+    const streamerItems = document.querySelectorAll('.streamer-item');
+    
+    streamerSearch.addEventListener('input', function() {
+      const searchTerm = this.value.toLowerCase();
+      
+      streamerItems.forEach(item => {
+        const streamerName = item.querySelector('.streamer-name').textContent.toLowerCase();
+        if (streamerName.includes(searchTerm)) {
+          item.style.display = 'flex';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    });
+    
+    // Select/Deselect all streamers
+    const selectAllBtn = document.getElementById('select-all');
+    const deselectAllBtn = document.getElementById('deselect-all');
+    const streamerCheckboxes = document.querySelectorAll('input[name="streamer_ids[]"]');
+    
+    selectAllBtn.addEventListener('click', function() {
+      streamerCheckboxes.forEach(checkbox => {
+        checkbox.checked = true;
+      });
+    });
+    
+    deselectAllBtn.addEventListener('click', function() {
+      streamerCheckboxes.forEach(checkbox => {
+        checkbox.checked = false;
+      });
+    });
+    
+    // Table density control
+    const tableDensity = document.getElementById('table-density');
+    const tableRows = document.querySelectorAll('#table-body tr');
+    
+    tableDensity.addEventListener('change', function() {
+      const density = this.value;
+      
+      tableRows.forEach(row => {
+        // Remove existing padding classes
+        row.querySelectorAll('td').forEach(cell => {
+          cell.classList.remove('py-4', 'py-2', 'py-6');
+          
+          if (density === 'compact') {
+            cell.classList.add('py-2');
+          } else if (density === 'expanded') {
+            cell.classList.add('py-6');
+          } else {
+            cell.classList.add('py-4'); // comfortable (default)
+          }
+        });
+      });
+    });
+    
+    // Table search functionality
+    const tableSearch = document.getElementById('table-search');
+    const tableRows2 = document.querySelectorAll('.table-row');
+    
+    tableSearch.addEventListener('input', function() {
+      const searchTerm = this.value.toLowerCase();
+      
+      tableRows2.forEach(row => {
+        const streamerName = row.getAttribute('data-streamer').toLowerCase();
+        if (streamerName.includes(searchTerm)) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    });
+    
+    // Table sorting
+    const sortableHeaders = document.querySelectorAll('[data-sort]');
+    let currentSort = { column: 'datetime', direction: 'asc' };
+    
+    sortableHeaders.forEach(header => {
+      header.addEventListener('click', function() {
+        const sortColumn = this.getAttribute('data-sort');
+        
+        // Toggle direction if clicking the same column
+        if (currentSort.column === sortColumn) {
+          currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+        } else {
+          currentSort.column = sortColumn;
+          currentSort.direction = 'asc';
+        }
+        
+        // Sort the table
+        const tableBody = document.getElementById('table-body');
+        const rows = Array.from(tableBody.querySelectorAll('tr'));
+        
+        rows.sort((a, b) => {
+          let aValue, bValue;
+          
+          if (sortColumn === 'streamer') {
+            aValue = a.getAttribute('data-streamer');
+            bValue = b.getAttribute('data-streamer');
+          } else if (sortColumn === 'viewers') {
+            aValue = parseInt(a.getAttribute('data-viewers'));
+            bValue = parseInt(b.getAttribute('data-viewers'));
+          } else {
+            // Default to datetime
+            aValue = new Date(a.querySelector('td:nth-child(2)').textContent.trim());
+            bValue = new Date(b.querySelector('td:nth-child(2)').textContent.trim());
+          }
+          
+          if (currentSort.direction === 'asc') {
+            return aValue > bValue ? 1 : -1;
+          } else {
+            return aValue < bValue ? 1 : -1;
+          }
+        });
+        
+        // Reappend in sorted order
+        rows.forEach(row => {
+          tableBody.appendChild(row);
+        });
+      });
+    });
+    
+    // Color scheme for streamers
+    const colorScheme = document.getElementById('color-scheme');
+    const streamerColors = document.querySelectorAll('.streamer-color');
+    const streamerBars = document.querySelectorAll('.streamer-bar');
+    
+    // Color palettes
+    const colorPalettes = {
+      default: ['#3b82f6', '#10b981', '#f97316', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#eab308'],
+      pastel: ['#93c5fd', '#6ee7b7', '#fdba74', '#c4b5fd', '#f9a8d4', '#67e8f9', '#bef264', '#fde68a'],
+      monochrome: ['#1e3a8a', '#1e40af', '#1d4ed8', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe'],
+      category: ['#3b82f6', '#3b82f6', '#10b981', '#10b981', '#f97316', '#f97316', '#8b5cf6', '#8b5cf6']
+    };
+    
+    colorScheme.addEventListener('change', function() {
+      const scheme = this.value;
+      const colors = colorPalettes[scheme];
+      
+      // Group streamers by ID
+      const streamerIds = new Set();
+      streamerColors.forEach(el => {
+        streamerIds.add(el.getAttribute('data-streamer-id'));
+      });
+      
+      // Assign colors to each streamer
+      Array.from(streamerIds).forEach((id, index) => {
+        const color = colors[index % colors.length];
+        
+        // Update color indicators
+        document.querySelectorAll(`.streamer-color[data-streamer-id="${id}"]`).forEach(el => {
+          el.style.backgroundColor = color;
+        });
+        
+        // Update bars
+        document.querySelectorAll(`.streamer-bar[data-streamer-id="${id}"]`).forEach(el => {
+          el.style.backgroundColor = color;
+        });
+      });
+    });
+  });
+</script>

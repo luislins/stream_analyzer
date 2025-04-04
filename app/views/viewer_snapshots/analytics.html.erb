@@ -1,0 +1,52 @@
+<div class="container mx-auto px-4 py-8">
+  <h1 class="text-2xl font-bold mb-6">Viewer Analytics</h1>
+
+  <div class="mb-6">
+    <%= form_tag analytics_viewer_snapshots_path, method: :get, class: "flex gap-4" do %>
+      <%= select_tag :streamer_id,
+          options_from_collection_for_select(@streamers, :id, :username, params[:streamer_id]),
+          prompt: "Select a streamer",
+          class: "rounded border p-2" %>
+      <%= submit_tag "View Analytics", class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" %>
+    <% end %>
+  </div>
+
+  <% if @selected_streamer && @snapshots.any? %>
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-xl font-semibold mb-4">
+        Viewer History for <%= @selected_streamer.username %>
+      </h2>
+      
+      <div class="h-96">
+        <%# We'll use Chart.js for visualization %>
+        <canvas id="viewerChart"></canvas>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      const ctx = document.getElementById('viewerChart');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: <%= raw @snapshots.map { |s| s.captured_at.strftime("%Y-%m-%d %H:%M") }.to_json %>,
+          datasets: [{
+            label: 'Viewers',
+            data: <%= raw @snapshots.map(&:viewer_count).to_json %>,
+            borderColor: 'rgb(59, 130, 246)',
+            tension: 0.1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    </script>
+  <% end %>
+</div> 

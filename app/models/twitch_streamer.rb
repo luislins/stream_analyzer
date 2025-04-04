@@ -1,4 +1,6 @@
 class TwitchStreamer < ApplicationRecord
+  has_many :viewer_snapshots, as: :streamable
+  
   validates :username, presence: true, uniqueness: true
   validates :twitch_id, presence: true, uniqueness: true
 

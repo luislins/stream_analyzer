@@ -22,6 +22,12 @@ class UpdateStreamersJob < ApplicationJob
             last_stream_at: data[:last_stream_at]
           )
           
+          # Create viewer snapshot after successful update
+          streamer.viewer_snapshots.create!(
+            viewer_count: data[:viewers],
+            captured_at: Time.current
+          )
+          
           Rails.logger.info "Successfully updated streamer: #{streamer.username}"
           
           # Broadcast update via Turbo Streams

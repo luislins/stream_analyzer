@@ -1,0 +1,13 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  streamable: one
+  streamable_type: Streamable
+  viewer_count: 1
+  captured_at: 2025-04-04 00:07:36
+
+two:
+  streamable: two
+  streamable_type: Streamable
+  viewer_count: 1
+  captured_at: 2025-04-04 00:07:36
