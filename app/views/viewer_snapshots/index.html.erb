@@ -5,7 +5,7 @@
   <!-- Filter Card -->
   <div class="bg-white shadow rounded-lg mb-8">
     <div class="border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-      <h2 class="text-xl font-semibold text-gray-800">Filter Options (por hora nao funciona)</h2>
+      <h2 class="text-xl font-semibold text-gray-800">Filter Options</h2>
       <button type="button" id="toggle-filters" class="text-gray-500 hover:text-gray-700 text-sm flex items-center">
         <span id="toggle-text">Hide Filters</span>
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" viewBox="0 0 20 20" fill="currentColor" id="toggle-icon">
@@ -181,7 +181,12 @@
                         <div
                           class="h-4 transition-all duration-300 ease-in-out streamer-bar"
                           data-streamer-id="<%= snapshot.streamable_id %>"
-                          style="width: <%= [[(snapshot.viewer_count.to_f / @max_viewers) * 100, 100].min.round(2), 5].max %>%; background-color: rgba(59, 130, 246, 0.8);"
+                          style="width: <%= 
+                            max_viewers = @max_viewers.to_f
+                            max_viewers = 1 if max_viewers.zero?
+                            percentage = (snapshot.viewer_count.to_f / max_viewers) * 100
+                            [[percentage, 100].min.round(2), 5].max
+                          %>%; background-color: rgba(59, 130, 246, 0.8);"
                         ></div>
                       </div>
                     </td>
@@ -621,7 +626,13 @@
                       <div class="bg-gray-200 rounded h-4 overflow-hidden">
                         <div
                           class="bg-blue-500 h-4"
-                          style="width: <%= percentage = (total.to_f / top_hours.first[1].to_f) * 100; percentage = 5 if percentage.nan? || percentage.infinite?; [percentage, 5].max %>%;"
+                          style="width: <%= 
+                            denominator = top_hours.first&.[] 1
+                            denominator = denominator.to_f
+                            denominator = 1 if denominator.zero? || denominator.nan?
+                            percentage = (total.to_f / denominator) * 100
+                            [percentage, 5].max
+                          %>%;"
                         ></div>
                       </div>
                     </div>

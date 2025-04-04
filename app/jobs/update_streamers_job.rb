@@ -22,11 +22,13 @@ class UpdateStreamersJob < ApplicationJob
             last_stream_at: data[:last_stream_at]
           )
           
-          # Create viewer snapshot after successful update
-          streamer.viewer_snapshots.create!(
-            viewer_count: data[:viewers],
-            captured_at: Time.current
-          )
+          # Create viewer snapshot only if the streamer is live
+          if data[:live]
+            streamer.viewer_snapshots.create!(
+              viewer_count: data[:viewers],
+              captured_at: Time.current
+            )
+          end
           
           Rails.logger.info "Successfully updated streamer: #{streamer.username}"
           
