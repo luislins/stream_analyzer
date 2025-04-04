@@ -90,4 +90,13 @@ class ViewerSnapshotsController < ApplicationController
       @chart_data = @snapshots.map { |s| [s.captured_at.strftime("%d/%m %H:%M"), s.viewer_count] }
     end
   end
+
+  def delete_all_snapshots
+   
+    count = ViewerSnapshot.count
+    ViewerSnapshot.delete_all
+    flash[:notice] = "Successfully deleted #{count} snapshots"
+ 
+    redirect_to viewer_snapshots_path
+  end
 end
