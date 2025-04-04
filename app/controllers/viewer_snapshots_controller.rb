@@ -2,22 +2,42 @@ class ViewerSnapshotsController < ApplicationController
   def index
     # Filtro de datas com padrão de 7 dias
     start_date = params[:start_date].present? ? Date.parse(params[:start_date]) : 7.days.ago.to_date
-    end_date = params[:end_date].present? ? Date.parse(params[:end_date]) : Date.today
+    end_date = params[:end_date].present? ? Date.parse(params[:end_date]) : nil
 
     # Processa hora e minuto para início
     start_hour = params[:start_hour].presence || "00"
     start_minute = params[:start_minute].presence || "00"
-    start_time = Time.parse("#{start_date} #{start_hour}:#{start_minute}")
+    start_time = Time.zone.local(
+      start_date.year,
+      start_date.month,
+      start_date.day,
+      start_hour.to_i,
+      start_minute.to_i
+    )
 
     # Processa hora e minuto para fim
     end_hour = params[:end_hour].presence || "23"
     end_minute = params[:end_minute].presence || "59"
-    end_time = Time.parse("#{end_date} #{end_hour}:#{end_minute}")
+    end_time = end_date.present? ? Time.zone.local(
+      end_date.year,
+      end_date.month,
+      end_date.day,
+      end_hour.to_i,
+      end_minute.to_i
+    ) : nil
+
+    Rails.logger.info "Filtering snapshots from #{start_time} #{end_time ? "to #{end_time}" : "onwards"}"
 
     # Filtra por streamers selecionados
     base_query = ViewerSnapshot.includes(:streamable)
-                              .where(captured_at: start_time..end_time)
-                              .order(:captured_at)
+                              .where("captured_at >= ?", start_time)
+    
+    # Adiciona o filtro de end_time apenas se ele existir
+    base_query = base_query.where("captured_at <= ?", end_time) if end_time.present?
+    
+    base_query = base_query.order(:captured_at)
+    
+    Rails.logger.info "Base query SQL: #{base_query.to_sql}"
     
     # Filtra por streamers específicos se fornecidos
     if params[:streamer_ids].present?
